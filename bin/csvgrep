@@ -52,12 +52,11 @@ sub show_matching_rows
     print generate_table(rows => \@rows, header_row => 1), "\n";
 }
 
-
 sub process_command_line
 {
     my $dirpath;
     my $help = 0;
-    
+
     GetOptions(
         'ignore-case|i'     => \$case_insensitive,
         'help|h'            => \$help,
@@ -66,10 +65,14 @@ sub process_command_line
     ) || die $usage_string;
 
     die $usage_string if ($help);
-    die $usage_string unless @ARGV == 2
+    die $usage_string unless @ARGV >= 1
                           || $dirpath;
 
-    my $pattern  = shift @ARGV;
+    if ((@ARGV == 1) && (-r $ARGV[0])) {
+        $pattern  = ".";
+    } else {
+        $pattern  = shift @ARGV;
+    }
 
     my $filename = $dirpath
                  ? find_newest_file($dirpath)
