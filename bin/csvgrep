@@ -13,6 +13,7 @@ my $SHOW_COUNT_THRESHOLD = 7;
 my $usage_string         = "usage: $0 [-h] [-d <dir>] [-i] <file> [pattern]\n";
 my $case_insensitive     = 0;
 my $match_column         = 0;
+my $has_header_row       = 0;
 my $column_spec;
 
 
@@ -36,14 +37,21 @@ sub show_matching_rows
         || die "can't read $filename: $!\n";
 
     my $parser  = Text::CSV_XS->new({ sep_char => $sep_char });
-    my @headers = @{ $parser->getline($fh) };
+	my @headers;
+	if ($has_header_row) {
+		@headers = @{ $parser->getline($fh) };
+	} else {
+		@headers = ();
+	}
 
     if ($column_spec) {
         @col_indices = split(/,/, $column_spec);
         @headers    = @headers[@col_indices];
     }
 
-    push(@rows, \@headers);
+	if (@headers) {
+		push(@rows, \@headers);
+	}
 
     while (<$fh>) {
         $total_rows++;
@@ -64,14 +72,14 @@ sub show_matching_rows
         push(@rows, [@columns]);
     }
 
-	# We have to add one to account for the header line
-	$total_rows++;
+    die "No match found in $total_rows records\n" unless @rows > 0;
 
-    die "No match found in $total_rows records\n" unless @rows > 1;
-
-    print generate_table(rows => \@rows, header_row => 1), "\n";
+    print generate_table(rows => \@rows, header_row => $has_header_row), "\n";
 
     my $displayed_rows = int(@rows) - 1;
+	if (!$has_header_row) {
+		$displayed_rows++;
+	}
     if ($displayed_rows > $SHOW_COUNT_THRESHOLD) {
         print "matched $displayed_rows of $total_rows lines\n";
     }
@@ -89,6 +97,7 @@ sub process_command_line
         'columns|c=s'       => \$column_spec,
         'directory|d=s'     => \$dirpath,
         'match-column|mc=i' => \$match_column,
+		'header'            => \$has_header_row,
     ) || die $usage_string;
 
     die $usage_string if ($help);
