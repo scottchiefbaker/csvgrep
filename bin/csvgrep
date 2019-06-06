@@ -1,4 +1,4 @@
-#!perl
+#!/usr/bin/perl
 use 5.010;
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ use Getopt::Long;
 binmode(STDOUT, ":utf8");
 
 my $SHOW_COUNT_THRESHOLD = 7;
-my $usage_string         = "usage: $0 [-h] [-d <dir>] [-i] <pattern> <file>\n";
+my $usage_string         = "usage: $0 [-h] [-d <dir>] [-i] <file> [pattern]\n";
 my $case_insensitive     = 0;
 my $match_column         = 0;
 my $column_spec;
@@ -82,7 +82,7 @@ sub process_command_line
 {
     my $dirpath;
     my $help = 0;
-    
+
     GetOptions(
         'ignore-case|i'     => \$case_insensitive,
         'help|h'            => \$help,
@@ -92,14 +92,24 @@ sub process_command_line
     ) || die $usage_string;
 
     die $usage_string if ($help);
-    die $usage_string unless @ARGV == 2
-                          || $dirpath;
 
-    my $pattern  = shift @ARGV;
+	my $pattern;
+	my $filename;
 
-    my $filename = $dirpath
-                 ? find_newest_file($dirpath)
-                 : shift @ARGV;
+	# If there is only one argument we're just showing the whole table
+	if (@ARGV == 1) {
+		$pattern  = ".";
+		$filename = shift @ARGV;
+	} elsif (@ARGV > 1) {
+		$filename = $dirpath
+			? find_newest_file($dirpath)
+			: shift @ARGV;
+		$pattern  = shift @ARGV;
+	} else {
+		die $usage_string;
+	}
+
+	#print "Pattern : '$pattern'\nFilename: '$filename'\n"; die;
 
     return ($pattern, $filename);
 }
