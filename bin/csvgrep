@@ -11,7 +11,7 @@ binmode(STDOUT, ":utf8");
 
 my $SHOW_COUNT_THRESHOLD = 7;
 my $usage_string         = "usage: $0 [-h] [-d <dir>] [-i] <file> [pattern]\n";
-my $case_insensitive     = 0;
+my $case_insensitive     = undef;
 my $match_column         = 0;
 my $has_header_row       = 0;
 my $column_spec;
@@ -119,6 +119,11 @@ sub process_command_line
 	}
 
 	#print "Pattern : '$pattern'\nFilename: '$filename'\n"; die;
+
+	# If we didn't force CaseInsensitive and the pattern is all lower case it's "smartcase"
+	if (!defined($case_insensitive) && $pattern =~ /^[a-z]+$/) {
+		$case_insensitive = 1;
+	}
 
     return ($pattern, $filename);
 }
